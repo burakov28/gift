@@ -255,19 +255,25 @@ public class MainActivity extends AppCompatActivity
         String path = getFilesDir() + "/" + Integer.toString(openedTask) + "/";
         BufferedReader reader = null;
         String rightAnswer;
+        StringBuilder tmp = new StringBuilder();
         try {
             reader = new BufferedReader(new FileReader(new File(path + getString(R.string.answer))));
-            rightAnswer = reader.readLine();
+            String current;
+            while ((current = reader.readLine()) != null) {
+                tmp.append(current);
+            }
+            rightAnswer = tmp.toString();
         } catch (IOException e) {
             rightAnswer = null;
         } finally {
             try { if (reader != null) reader.close(); } catch (IOException e) { e.printStackTrace(); }
         }
 
-        if (rightAnswer == null) {
+        if (rightAnswer == null || rightAnswer.equals("")) {
             toErrorMode("При скачивании правильного ответа произошла ошибка, перезагрузите");
             return;
         }
+
         String cans = answer.getText().toString();
         cans = rebuildString(cans);
         rightAnswer = rebuildString(rightAnswer);
