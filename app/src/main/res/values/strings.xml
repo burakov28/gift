@@ -1,0 +1,29 @@
+<resources>
+    <string name="app_name">Подарок</string>
+
+    <string name="navigation_drawer_open">Open navigation drawer</string>
+    <string name="navigation_drawer_close">Close navigation drawer</string>
+
+    <string name="action_settings">Settings</string>
+
+    <string name="photo_name">photo.jpg</string>
+    <string name="question">question</string>
+    <string name="answer">answer</string>
+
+    <string name="refresh">Обновить</string>
+    <string name="answer_hint">Введите ответ</string>
+    <string name="commit_answer">Проверить ответ</string>
+    <string name="need_reload">Необходимо перезагрузить</string>
+    <string name="task_with_number">Загадка №</string>
+
+    <string name="title">Подарок для моей любимой Асеньки</string>
+    <string name="main_title">Загадки</string>
+
+    <string name="open_connection_error">Ошибка! Не удалось установит соединение</string>
+    <string name="file_system_error">Ошибка при работе с файловой системой. Проверьте, достаточно ли
+        свободной памяти</string>
+    <string name="error_while_downloading">Произошла ошибка при загрузке</string>
+
+    <string name="answered">Правильный ответ!</string>
+    <string name="incorrect">Неверно!</string>
+</resources>
