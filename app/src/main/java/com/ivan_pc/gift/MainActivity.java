@@ -306,7 +306,7 @@ public class MainActivity extends AppCompatActivity
         else {
             Toast.makeText(this, getString(R.string.incorrect), Toast.LENGTH_SHORT).show();
             Log.d(LOG_TAG, "SIZES right: " + Integer.toString(rightAnswer.length()) + " my " + Integer.toString(cans.length()));
-            for (int i = 0; i < cans.length(); ++i) {
+            for (int i = 0; i < Math.min(cans.length(), rightAnswer.length()); ++i) {
                 if (rightAnswer.charAt(i) != cans.charAt(i)) {
                     Log.d(LOG_TAG, "DIFFER AT: " + Integer.toString(i) + " " + cans.charAt(i) +  " " + rightAnswer.charAt(i));
 
