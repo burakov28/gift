@@ -269,8 +269,13 @@ public class MainActivity extends AppCompatActivity
             return;
         }
         String cans = answer.getText().toString();
+        cans = rebuildString(cans);
+        rightAnswer = rebuildString(rightAnswer);
+
         Log.d(LOG_TAG, "RIGHT_ANSWER: " + rightAnswer);
         Log.d(LOG_TAG, "ANSWER: " + cans);
+
+
 
         if (cans.equalsIgnoreCase(rightAnswer)) {
             SharedPreferences.Editor editor = prefs.edit();
@@ -302,6 +307,28 @@ public class MainActivity extends AppCompatActivity
                 }
             }
         }
+    }
+
+    private static boolean isRussianLetter(char c) {
+        return ((('а' <= c) && (c <= 'я')) || (('А' <= c) && (c <= 'Я')));
+    }
+
+    private static boolean isEnglishLetter(char c) {
+        return ((('a' <= c) && (c <= 'z')) || (('A' <= c) && (c <= 'Z')));
+    }
+
+    private static boolean isNumber(char c) {
+        return (('1' <= c) && (c <= '9'));
+    }
+
+    private static String rebuildString(String s) {
+        StringBuilder tmp = new StringBuilder();
+        for (int i = 0; i < s.length(); ++i) {
+            if (isEnglishLetter(s.charAt(i)) || isRussianLetter(s.charAt(i)) || isNumber(s.charAt(i))) {
+                tmp.append(s.charAt(i));
+            }
+        }
+        return tmp.toString();
     }
 
     public void refresh(View view) {
