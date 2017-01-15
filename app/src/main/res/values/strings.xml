@@ -9,6 +9,7 @@
     <string name="photo_name">photo.jpg</string>
     <string name="question">question</string>
     <string name="answer">answer</string>
+    <string name="description">description</string>
 
     <string name="refresh">Обновить</string>
     <string name="answer_hint">Введите ответ</string>
@@ -23,6 +24,9 @@
     <string name="file_system_error">Ошибка при работе с файловой системой. Проверьте, достаточно ли
         свободной памяти</string>
     <string name="error_while_downloading">Произошла ошибка при загрузке</string>
+    <string name="description_error">Не удалось загрузить описание вопроса</string>
+    <string name="question_error">Не удалось загрузить вопрос</string>
+
 
     <string name="answered">Правильный ответ!</string>
     <string name="incorrect">Неверно!</string>

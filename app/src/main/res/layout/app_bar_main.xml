@@ -21,7 +21,17 @@
 
     </android.support.design.widget.AppBarLayout>
 
-    <include layout="@layout/content_main" />
+    <include layout="@layout/content_main"
+        android:id="@+id/include" />
 
+    <android.support.design.widget.FloatingActionButton
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|right"
+        app:fabSize="normal"
+        android:layout_margin="16dp"
+        android:src="@drawable/ic_lock_open_black"
+        app:layout_anchorGravity="bottom|right|end"
+        android:onClick="fabClick"/>
 
 </android.support.design.widget.CoordinatorLayout>

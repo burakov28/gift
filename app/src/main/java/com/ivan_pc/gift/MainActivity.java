@@ -37,6 +37,7 @@ public class MainActivity extends AppCompatActivity
     public static final String PATH_KEY = "path_key";
     public static final String ERROR_KEY = "error_key";
     public static final String NOT_IMPLEMENTED = "~~~~bad~~~~response~~~!!";
+    public static final String DESCRIPTION_KEY = "description_key";
 
     private static final String SAVED_TASK = "saved_task";
 
@@ -63,10 +64,10 @@ public class MainActivity extends AppCompatActivity
         super.onCreate(savedInstanceState);
         prefs = getPreferences(MODE_PRIVATE);
 
-        //SharedPreferences.Editor editor = prefs.edit();
-        //editor.putInt(SAVED_TASK, 1);
-        //editor.apply();
-        //clear();
+        SharedPreferences.Editor editor = prefs.edit();
+        editor.putInt(SAVED_TASK, 1);
+        editor.apply();
+        clear();
 
         Fresco.initialize(this);
         setContentView(R.layout.activity_main);
@@ -146,6 +147,7 @@ public class MainActivity extends AppCompatActivity
             new File(cpath + getString(R.string.photo_name)).delete();
             new File(cpath + getString(R.string.answer)).delete();
             new File(cpath + getString(R.string.question)).delete();
+            new File(cpath + getString(R.string.description)).delete();
         }
     }
 
@@ -193,6 +195,7 @@ public class MainActivity extends AppCompatActivity
         new File(path + getString(R.string.question)).delete();
         new File(path + getString(R.string.photo_name)).delete();
         new File(path + getString(R.string.answer)).delete();
+        new File(path + getString(R.string.description)).delete();
     }
 
     void reloadTask(int taskNumber) {
@@ -228,17 +231,44 @@ public class MainActivity extends AppCompatActivity
         scrollView.setVisibility(View.VISIBLE);
         answer.setText("");
 
+
+
         String path = getFilesDir() + "/" + Integer.toString(taskNumber) + "/";
 
         questNumber.setText(getString(R.string.task_with_number) + Integer.toString(taskNumber));
         BufferedReader reader = null;
+
+        try {
+            reader = new BufferedReader(new FileReader(new File(path + getString(R.string.description))));
+            String description = reader.readLine();
+            if (description.equals("")) {
+                toErrorMode(getString(R.string.description_error));
+                return;
+            }
+            if (!description.equals(NOT_IMPLEMENTED)) {
+                Intent intent = new Intent(this, Main2Activity.class);
+                intent.putExtra(DESCRIPTION_KEY, description);
+                startActivity(intent);
+            }
+        } catch (IOException e) {
+            toErrorMode(getString(R.string.description_error));
+            return;
+        } finally {
+            try {
+                if (reader != null) reader.close();
+            } catch (IOException ioe) {
+                ioe.printStackTrace();
+            }
+        }
+
         try {
             reader = new BufferedReader(new FileReader(new File(path + getString(R.string.question))));
             question.setText(reader.readLine());
         } catch (IOException e) {
-            question.setText(getString(R.string.need_reload));
+            toErrorMode(getString(R.string.question_error));
+            return;
         } finally {
-            try { if (reader != null) reader.close(); } catch (IOException e) { e.printStackTrace(); }
+            try { reader.close(); } catch (IOException e) { e.printStackTrace(); }
         }
 
         draweeView.setImageURI(Uri.fromFile(new File(path + getString(R.string.photo_name))));
@@ -339,6 +369,10 @@ public class MainActivity extends AppCompatActivity
 
     public void refresh(View view) {
         reloadTask(openedTask);
+    }
+
+    public void fabClick(View view) {
+
     }
 }
 
