@@ -16,8 +16,9 @@ public class LoaderService extends Service {
     public int onStartCommand(Intent intent, int flags, int startId) {
         String path = intent.getStringExtra(MainActivity.PATH_KEY);
         int taskNumber = intent.getIntExtra(MainActivity.TASK_NUM_KEY, 0);
+        boolean isFirst = intent.getBooleanExtra(MainActivity.IS_FIRST_KEY, false);
         PendingIntent pendingIntent = intent.getParcelableExtra(MainActivity.PENDING_INTENT_KEY);
-        Thread th = new Thread(new RunnableTaskDownloader(path, taskNumber, pendingIntent, this));
+        Thread th = new Thread(new RunnableTaskDownloader(path, taskNumber, isFirst, pendingIntent, this));
         th.start();
         return super.onStartCommand(intent, flags, startId);
     }

@@ -23,11 +23,17 @@ import android.widget.Toast;
 
 import com.facebook.drawee.backends.pipeline.Fresco;
 import com.facebook.drawee.view.SimpleDraweeView;
+import com.vk.sdk.VKSdk;
+import com.vk.sdk.api.VKError;
+import com.vk.sdk.api.VKRequest;
+import com.vk.sdk.api.VKResponse;
+
 
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+
 
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
@@ -38,6 +44,8 @@ public class MainActivity extends AppCompatActivity
     public static final String ERROR_KEY = "error_key";
     public static final String NOT_IMPLEMENTED = "~~~~bad~~~~response~~~!!";
     public static final String DESCRIPTION_KEY = "description_key";
+    public static final String IS_FIRST_KEY = "is_first";
+
 
     private static final String SAVED_TASK = "saved_task";
 
@@ -49,6 +57,7 @@ public class MainActivity extends AppCompatActivity
     private int lastTask;
 
     SharedPreferences prefs;
+    Sender sender;
 
     TextView question, questNumber, errorReport;
     EditText answer;
@@ -57,19 +66,22 @@ public class MainActivity extends AppCompatActivity
     Button scrollRefreshButton, globalRefreshButton;
     ProgressBar progressBar;
     NavigationView navigationView;
-
+    View fabButton;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         prefs = getPreferences(MODE_PRIVATE);
-
-        SharedPreferences.Editor editor = prefs.edit();
-        editor.putInt(SAVED_TASK, 1);
-        editor.apply();
-        clear();
+        sender = new Sender();
+        //editor.putInt(SAVED_TASK, 1);
+        //editor.apply();
+        //clear();
 
         Fresco.initialize(this);
+
+
+
+
         setContentView(R.layout.activity_main);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
@@ -92,6 +104,7 @@ public class MainActivity extends AppCompatActivity
         globalRefreshButton = (Button) findViewById(R.id.globalRefreshButton);
         questNumber = (TextView) findViewById(R.id.task_number);
         errorReport = (TextView) findViewById(R.id.errorReport);
+        fabButton = findViewById(R.id.fabButton);
 
         //deleteFiles(task);
 
@@ -110,7 +123,7 @@ public class MainActivity extends AppCompatActivity
 
         navigationView.setNavigationItemSelectedListener(this);
 
-        openTask(openedTask);
+        openTask(openedTask, false);
     }
 
 
@@ -171,14 +184,14 @@ public class MainActivity extends AppCompatActivity
         // Handle navigation view item clicks here.
         int id = item.getItemId();
 
-        openTask(id);
+        openTask(id, false);
 
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         drawer.closeDrawer(GravityCompat.START);
         return true;
     }
 
-    void openTask(int taskNumber) {
+    void openTask(int taskNumber, boolean isFirst) {
         toStandbyMode();
         openedTask = taskNumber;
         String path = getFilesDir() + "/" + Integer.toString(taskNumber) + "/";
@@ -186,7 +199,8 @@ public class MainActivity extends AppCompatActivity
         PendingIntent pendingIntent = createPendingResult(taskNumber, new Intent(), 0);
         intent = new Intent(this, LoaderService.class).putExtra(PATH_KEY, path).
                 putExtra(PENDING_INTENT_KEY, pendingIntent)
-                .putExtra(TASK_NUM_KEY, taskNumber);
+                .putExtra(TASK_NUM_KEY, taskNumber)
+                .putExtra(IS_FIRST_KEY, isFirst);
         startService(intent);
     }
 
@@ -200,7 +214,7 @@ public class MainActivity extends AppCompatActivity
 
     void reloadTask(int taskNumber) {
         deleteFiles(taskNumber);
-        openTask(taskNumber);
+        openTask(taskNumber, false);
     }
 
     @Override
@@ -209,7 +223,7 @@ public class MainActivity extends AppCompatActivity
 
         if (requestCode == openedTask && resultCode == END_CODE) {
             stopService(new Intent(this, RunnableTaskDownloader.class));
-            toDisplayMode(openedTask);
+            toDisplayMode(openedTask, data.getBooleanExtra(IS_FIRST_KEY, false));
         }
 
         if (resultCode == ERROR_CODE) {
@@ -222,13 +236,13 @@ public class MainActivity extends AppCompatActivity
         errorReport.setVisibility(View.INVISIBLE);
         scrollView.setVisibility(View.INVISIBLE);
         progressBar.setVisibility(View.VISIBLE);
+        fabButton.setVisibility(View.INVISIBLE);
     }
 
-    void toDisplayMode(int taskNumber) {
+    void toDisplayMode(int taskNumber, boolean isFirst) {
         errorReport.setVisibility(View.INVISIBLE);
         globalRefreshButton.setVisibility(View.INVISIBLE);
         progressBar.setVisibility(View.INVISIBLE);
-        scrollView.setVisibility(View.VISIBLE);
         answer.setText("");
 
 
@@ -246,9 +260,13 @@ public class MainActivity extends AppCompatActivity
                 return;
             }
             if (!description.equals(NOT_IMPLEMENTED)) {
-                Intent intent = new Intent(this, Main2Activity.class);
-                intent.putExtra(DESCRIPTION_KEY, description);
-                startActivity(intent);
+                fabButton.setVisibility(View.VISIBLE);
+                if (isFirst) {
+                    Intent intent = new Intent(this, Main2Activity.class);
+                    intent.putExtra(DESCRIPTION_KEY, description);
+                    startActivity(intent);
+                }
+
             }
         } catch (IOException e) {
             toErrorMode(getString(R.string.description_error));
@@ -270,7 +288,7 @@ public class MainActivity extends AppCompatActivity
         } finally {
             try { reader.close(); } catch (IOException e) { e.printStackTrace(); }
         }
-
+        scrollView.setVisibility(View.VISIBLE);
         draweeView.setImageURI(Uri.fromFile(new File(path + getString(R.string.photo_name))));
     }
     void toErrorMode(String report) {
@@ -279,6 +297,7 @@ public class MainActivity extends AppCompatActivity
         globalRefreshButton.setVisibility(View.VISIBLE);
         scrollView.setVisibility(View.INVISIBLE);
         progressBar.setVisibility(View.INVISIBLE);
+        fabButton.setVisibility(View.INVISIBLE);
     }
 
     public void commitAnswer(View view) {
@@ -316,11 +335,16 @@ public class MainActivity extends AppCompatActivity
         if (cans.equalsIgnoreCase(rightAnswer)) {
             SharedPreferences.Editor editor = prefs.edit();
             ++openedTask;
+            boolean isFirst = false;
             if (openedTask > lastTask) {
                 lastTask = openedTask;
                 editor.putInt(SAVED_TASK, openedTask);
                 editor.apply();
 
+
+                sender.send("SolveTask" + Integer.toString(lastTask - 1));
+
+                isFirst = true;
                 Menu navMenu = navigationView.getMenu();
                 MenuItem item = navMenu.add(GROUP_ID, lastTask, lastTask, getString(R.string.task_with_number) + Integer.toString(lastTask));
                 item.setIcon(R.drawable.ic_lock_open_black);
@@ -331,7 +355,7 @@ public class MainActivity extends AppCompatActivity
 
 
             Toast.makeText(this, getString(R.string.answered), Toast.LENGTH_SHORT).show();
-            openTask(openedTask);
+            openTask(openedTask, isFirst);
         }
         else {
             Toast.makeText(this, getString(R.string.incorrect), Toast.LENGTH_SHORT).show();
@@ -372,7 +396,30 @@ public class MainActivity extends AppCompatActivity
     }
 
     public void fabClick(View view) {
+        String path = getFilesDir() + "/" + Integer.toString(openedTask) + "/";
+        BufferedReader reader = null;
 
+        try {
+            reader = new BufferedReader(new FileReader(new File(path + getString(R.string.description))));
+            String description = reader.readLine();
+            if (description.equals("")) {
+                toErrorMode(getString(R.string.description_error));
+                return;
+            }
+            if (!description.equals(NOT_IMPLEMENTED)) {
+                Intent intent = new Intent(this, Main2Activity.class);
+                intent.putExtra(DESCRIPTION_KEY, description);
+                startActivity(intent);
+            }
+        } catch (IOException e) {
+            toErrorMode(getString(R.string.description_error));
+        } finally {
+            try {
+                if (reader != null) reader.close();
+            } catch (IOException ioe) {
+                ioe.printStackTrace();
+            }
+        }
     }
 }
 

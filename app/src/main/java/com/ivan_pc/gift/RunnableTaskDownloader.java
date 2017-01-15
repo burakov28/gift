@@ -32,12 +32,14 @@ public class RunnableTaskDownloader implements Runnable {
     private final String pathToSave;
     private final Context context;
     private final int taskNumber;
+    private final boolean isFirst;
 
-    RunnableTaskDownloader(String pathToSave, int taskNumber, PendingIntent pendingIntent, Context context) {
+    RunnableTaskDownloader(String pathToSave, int taskNumber, boolean isFirst, PendingIntent pendingIntent, Context context) {
         this.pendingIntent = pendingIntent;
         this.pathToSave = pathToSave;
         this.context = context;
         this.taskNumber = taskNumber;
+        this.isFirst = isFirst;
     }
 
     private void downloadToFile(File to, String from) throws LoadException {
@@ -64,8 +66,6 @@ public class RunnableTaskDownloader implements Runnable {
             e.printStackTrace();
             throw new LoadException(context.getString(R.string.open_connection_error));
         }
-
-
 
         if (to.exists()) {
             to.delete();
@@ -105,7 +105,8 @@ public class RunnableTaskDownloader implements Runnable {
     private boolean checkFiles() {
         if ((new File(pathToSave + context.getString(R.string.photo_name)).exists()) &&
                 (new File(pathToSave + context.getString(R.string.question)).exists()) &&
-                (new File(pathToSave + context.getString(R.string.answer)).exists())) {
+                (new File(pathToSave + context.getString(R.string.answer)).exists()) &&
+                (new File(pathToSave + context.getString(R.string.description))).exists()) {
             BufferedReader reader = null;
             String rightAnswer;
             try {
@@ -133,6 +134,8 @@ public class RunnableTaskDownloader implements Runnable {
                         DOWNLOAD_URL + Integer.toString(taskNumber) + "/" + context.getString(R.string.question));
                 downloadToFile(new File(pathToSave + context.getString(R.string.answer)),
                         DOWNLOAD_URL + Integer.toString(taskNumber) + "/" + context.getString(R.string.answer));
+                downloadToFile(new File(pathToSave + context.getString(R.string.description)),
+                        DOWNLOAD_URL + Integer.toString(taskNumber) + "/" + context.getString(R.string.description));
             } catch (LoadException e) {
                 try {
                     pendingIntent.send(context, MainActivity.ERROR_CODE, new Intent()
@@ -145,7 +148,8 @@ public class RunnableTaskDownloader implements Runnable {
         }
 
         try {
-            pendingIntent.send(context, MainActivity.END_CODE, new Intent());
+            Intent intent = new Intent().putExtra(MainActivity.IS_FIRST_KEY, isFirst);
+            pendingIntent.send(context, MainActivity.END_CODE, intent);
         } catch (PendingIntent.CanceledException e) {
             e.printStackTrace();
         }

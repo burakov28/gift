@@ -30,4 +30,6 @@
 
     <string name="answered">Правильный ответ!</string>
     <string name="incorrect">Неверно!</string>
+
+    <integer name="com_vk_sdk_AppId">5823323</integer>
 </resources>

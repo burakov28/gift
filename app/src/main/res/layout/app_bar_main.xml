@@ -27,11 +27,14 @@
     <android.support.design.widget.FloatingActionButton
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_gravity="bottom|right"
+        android:layout_gravity="top|left"
         app:fabSize="normal"
+        android:id="@+id/fabButton"
         android:layout_margin="16dp"
-        android:src="@drawable/ic_lock_open_black"
-        app:layout_anchorGravity="bottom|right|end"
-        android:onClick="fabClick"/>
+        android:src="@drawable/ic_priority_high_black"
+        app:backgroundTint="@color/fabColor"
+        app:layout_anchorGravity="bottom|right"
+        android:onClick="fabClick"
+        app:layout_anchor="@+id/include" />
 
 </android.support.design.widget.CoordinatorLayout>
