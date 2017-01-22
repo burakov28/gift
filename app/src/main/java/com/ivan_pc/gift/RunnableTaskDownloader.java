@@ -24,9 +24,9 @@ import java.net.URL;
  */
 
 public class RunnableTaskDownloader implements Runnable {
-    private static final int BLOCK_SIZE = 16 * 1024;
+    public static final int BLOCK_SIZE = 16 * 1024;
     private static final String LOG_TAG = RunnableTaskDownloader.class.getSimpleName();
-    private static final String DOWNLOAD_URL = "https://raw.githubusercontent.com/burakov28/gift/master/tasks/";
+    public static final String DOWNLOAD_URL = "https://raw.githubusercontent.com/burakov28/gift/master/tasks/";
 
     private final PendingIntent pendingIntent;
     private final String pathToSave;
@@ -42,13 +42,13 @@ public class RunnableTaskDownloader implements Runnable {
         this.isFirst = isFirst;
     }
 
-    private void downloadToFile(File to, String from) throws LoadException {
+    public void downloadToFile(File to, String from) throws LoadException {
         Log.d(LOG_TAG, "FROM: " + from);
         Log.d(LOG_TAG, "TO: " + to.toString());
 
-        HttpURLConnection connection;
-        InputStream downloadFrom;
-        FileOutputStream downloadTo;
+        HttpURLConnection connection = null;
+        InputStream downloadFrom = null;
+        FileOutputStream downloadTo = null;
         URL url = null;
 
         try {
@@ -64,6 +64,12 @@ public class RunnableTaskDownloader implements Runnable {
             downloadFrom = new BufferedInputStream(connection.getInputStream(), BLOCK_SIZE);
         } catch (IOException e) {
             e.printStackTrace();
+            if (connection != null) connection.disconnect();
+            try {
+                downloadFrom.close();
+            } catch(IOException q) {
+                q.printStackTrace();
+            }
             throw new LoadException(context.getString(R.string.open_connection_error));
         }
 
@@ -93,6 +99,8 @@ public class RunnableTaskDownloader implements Runnable {
         } catch (IOException e) {
             e.printStackTrace();
             throw new LoadException(context.getString(R.string.error_while_downloading));
+        } finally {
+            connection.disconnect();
         }
         try {
             downloadTo.flush();

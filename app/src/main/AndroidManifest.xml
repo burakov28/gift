@@ -30,7 +30,16 @@
             android:enabled="true"
             android:exported="true" />
 
-        <activity android:name=".Main2Activity"></activity>
+        <activity android:name=".Main2Activity" />
+
+        <receiver
+            android:name=".NotifierReceiver"
+            android:enabled="true"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.ACTION_POWER_CONNECTED"/>
+            </intent-filter>
+        </receiver>
     </application>
 
 </manifest>

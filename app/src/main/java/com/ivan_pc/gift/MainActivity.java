@@ -23,11 +23,6 @@ import android.widget.Toast;
 
 import com.facebook.drawee.backends.pipeline.Fresco;
 import com.facebook.drawee.view.SimpleDraweeView;
-import com.vk.sdk.VKSdk;
-import com.vk.sdk.api.VKError;
-import com.vk.sdk.api.VKRequest;
-import com.vk.sdk.api.VKResponse;
-
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -342,7 +337,7 @@ public class MainActivity extends AppCompatActivity
                 editor.apply();
 
 
-                sender.send("SolveTask" + Integer.toString(lastTask - 1));
+                sender.send("SolveTaskNumber:" + Integer.toString(lastTask - 1));
 
                 isFirst = true;
                 Menu navMenu = navigationView.getMenu();
