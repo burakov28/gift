@@ -1,9 +1,15 @@
 package com.ivan_pc.gift;
 
+import android.app.Notification;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.app.Service;
+import android.content.Context;
 import android.content.Intent;
+import android.icu.util.TimeUnit;
 import android.os.Environment;
 import android.os.IBinder;
+import android.util.Log;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;
@@ -13,8 +19,11 @@ import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.sql.Time;
 
 public class NotifierService extends Service {
+    private static final String LOG_TAG = NotifierService.class.getSimpleName();
+    public static boolean onWork;
     public NotifierService() {
     }
 
@@ -23,69 +32,74 @@ public class NotifierService extends Service {
         super.onCreate();
     }
 
-    String readStringFromFile(File source) {
-        BufferedReader reader = null;
-        StringBuilder tmp = null;
-        try {
-            reader = new BufferedReader(new FileReader(source));
-
-            tmp = new StringBuilder();
-            String newLine;
-            while ((newLine = reader.readLine()) != null) {
-                tmp.append(newLine);
-            }
-
-        } catch (IOException ignored) {
-
-        } finally {
-            try {
-                if (reader != null) reader.close();
-            } catch (IOException ioe) {
-                ioe.printStackTrace();
-            }
-        }
-        if (tmp == null) return null;
-        return tmp.toString();
+    @Override
+    public int onStartCommand(Intent intent, int flags, int startId) {
+        onWork = true;
+        new Thread(new RunnableChecker(this)).start();
+        onWork = false;
+        return super.onStartCommand(intent, flags, startId);
     }
 
     @Override
-    public int onStartCommand(Intent intent, int flags, int startId) {
-        String path = getFilesDir().toString();
-        int cur = 1;
-        while (new File(path + "/" + Integer.toString(cur)).exists()) {
-            ++cur;
+    public void onDestroy() {
+        super.onDestroy();
+        onWork = false;
+    }
+
+
+    class RunnableChecker implements Runnable {
+        Context context;
+
+        RunnableChecker(Context context) {
+            this.context = context;
         }
-        --cur;
+        @Override
+        public void run() {
+            String toStr = getFilesDir().toString();
+            int taskNumber = 1;
+            while (new File(toStr + "/" + Integer.toString(taskNumber)).exists()) ++taskNumber;
+            --taskNumber;
+            File to = new File(toStr + "/tmp");
+            String from = RunnableTaskDownloader.DOWNLOAD_URL + Integer.toString(taskNumber) + "/" + getString(R.string.answer);
 
-
-        String tmpPath = path;
-        File tmpAnswer = new File(tmpPath + "/" + "tmpAnswer");
-
-
-        File answer = new File("/" + Integer.toString(cur) + "/" + getString(R.string.answer));
-
-
-        if (cur != 0) {
-            RunnableTaskDownloader downloader = new RunnableTaskDownloader(tmpPath, cur, false, null, this);
-            try {
-                downloader.downloadToFile(tmpAnswer,
-                        RunnableTaskDownloader.DOWNLOAD_URL + Integer.toString(cur) + "/" + getString(R.string.answer));
-                if (answer.exists() && tmpAnswer.exists()) {
-                    String was = readStringFromFile(answer);
-                    String now = readStringFromFile(tmpAnswer);
-                    if (was.equals(MainActivity.NOT_IMPLEMENTED) && !now.equals(MainActivity.NOT_IMPLEMENTED)) {
-
+            RunnableTaskDownloader downloader = Utils.initDownloader(to, from);
+            while (true) {
+                try {
+                    to.delete();
+                    String current = Utils.readStringFromFile(new File(toStr + "/" + Integer.toString(taskNumber) + "/" + getString(R.string.answer)));
+                    if (current.equals(MainActivity.NOT_IMPLEMENTED)) {
+                        downloader.downloadToFile(to, from);
+                        Utils.readStringFromFile(to);
+                        if (!to.toString().equals(MainActivity.NOT_IMPLEMENTED)) {
+                            NotificationManager nm = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+                            Intent intent = new Intent(context, MainActivity.class);
+                            PendingIntent pIntent = PendingIntent.getActivity(context, 0, intent, PendingIntent.FLAG_CANCEL_CURRENT);
+                            Notification notif = new Notification.Builder(context)
+                                    .setContentIntent(pIntent)
+                                    .setContentTitle("Новая задачка")
+                                    .setContentText("Пора скачать и решить новую задачку")
+                                    .setSmallIcon(R.drawable.ic_card_giftcard_black)
+                                    .setWhen(System.currentTimeMillis())
+                                    .build();
+                            notif.flags |= Notification.FLAG_AUTO_CANCEL;
+                            nm.notify(0, notif);
+                            break;
+                        }
                     }
+                } catch (Exception e) {
+                    Log.d(LOG_TAG, "Can't load answer");
+                }
+                try {
+                    Thread.sleep(60 * 1000);
+                } catch (InterruptedException e) {
+                    Log.d(LOG_TAG, "Error on stop");
+                    break;
                 }
 
-            } catch (LoadException e) {
-
-            } finally {
-                tmpAnswer.delete();
             }
         }
-        return super.onStartCommand(intent, flags, startId);
     }
+
 
     @Override
     public IBinder onBind(Intent intent) {

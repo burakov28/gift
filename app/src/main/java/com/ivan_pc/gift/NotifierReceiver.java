@@ -15,6 +15,6 @@ public class NotifierReceiver extends BroadcastReceiver {
     @Override
     public void onReceive(Context context, Intent intent) {
         Log.d(LOG_TAG, "catch receiver");
-        context.startService(new Intent(context, NotifierService.class));
+        if (!NotifierService.onWork) context.startService(new Intent(context, NotifierService.class));
     }
 }

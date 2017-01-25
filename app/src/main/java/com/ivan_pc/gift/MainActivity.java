@@ -66,6 +66,7 @@ public class MainActivity extends AppCompatActivity
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        if (!NotifierService.onWork) startService(new Intent(this, NotifierService.class));
         prefs = getPreferences(MODE_PRIVATE);
         sender = new Sender();
         //editor.putInt(SAVED_TASK, 1);
