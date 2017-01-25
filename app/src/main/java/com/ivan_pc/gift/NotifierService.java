@@ -55,7 +55,7 @@ public class NotifierService extends Service {
         }
         @Override
         public void run() {
-            String toStr = getFilesDir().toString();
+            String toStr = context.getFilesDir().toString();
             int taskNumber = 1;
             while (new File(toStr + "/" + Integer.toString(taskNumber)).exists()) ++taskNumber;
             --taskNumber;
@@ -67,6 +67,8 @@ public class NotifierService extends Service {
                 try {
                     to.delete();
                     String current = Utils.readStringFromFile(new File(toStr + "/" + Integer.toString(taskNumber) + "/" + getString(R.string.answer)));
+                    Log.d(LOG_TAG, toStr + "/" + Integer.toString(taskNumber) + "/" + getString(R.string.answer));
+                    Log.d(LOG_TAG, from);
                     if (current.equals(MainActivity.NOT_IMPLEMENTED)) {
                         downloader.downloadToFile(to, from);
                         Utils.readStringFromFile(to);
